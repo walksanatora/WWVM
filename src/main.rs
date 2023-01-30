@@ -32,13 +32,24 @@ trait Module {
 struct Mux {
     start:u16,
     alloc: u16,
-    addr: u16
+    addr_size: u16,
+    sub_modules: Vec<Vec<IDs>>
+}
+
+struct Rom {
+    start: u16,
+    alloc: u16,
+    values: Vec<u16>
 }
 
 enum IDs {
-    Mux(Mux)
+    Mux(Mux),
+    Rom(Rom)
 }
 
+fn decodeJsonToVM(data: Vec<Value>) -> Vec<IDs> {
+    vec![IDs::Rom(Rom {start: 0,alloc: 1,values: vec![2,3,4,5,6,7,8,9,10]})]
+}
 
 fn main() {
     println!("Hello, world!");
