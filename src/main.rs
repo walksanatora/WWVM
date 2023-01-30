@@ -9,13 +9,13 @@ enum Error {
     OutOfSpace
 }
 
-trait CreateModule {
-        /// generic creation function
+trait CreateModule: Module+Sized {
+    /// generic creation function
     /// start is the first adress managed by this module
     /// alloc is a optional ammount of bytes allocated to this module
     /// options are extra options outside of those normally provided
     /// remaing is the ammout of free space after the start (alloc should never be more then remaing, that will cause a error)
-    fn create(start: u16, alloc: Option<u16>, options: Option<HashMap<String,Value>>,remaining: u16) -> Result<Self,Error> where Self: Sized + Module;
+    fn create(start: u16, alloc: Option<u16>, options: Option<HashMap<String,Value>>,remaining: u16) -> Result<Self,Error>;
 }
 
 #[enum_dispatch]
