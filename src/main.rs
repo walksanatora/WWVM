@@ -6,7 +6,9 @@ enum Error {
     /// for when the adress is not managed by this module
     OutOfScope,
     /// something tried to allocate more memory then is avaliable
-    OutOfSpace
+    OutOfSpace,
+    /// Generic error, Aka: too specific error
+    Generic(String)
 }
 
 trait CreateModule: Module+Sized {
@@ -34,6 +36,11 @@ trait Module {
     fn is_write(&self, addr: u16) -> bool;
 }
 
+/// a MultiPlexer module
+/// this module can hold mutiple other lowers
+/// defaults:
+///     alloc: 32
+///     addr_size: 1
 struct Mux {
     start:u16,
     alloc: u16,
@@ -43,27 +50,43 @@ struct Mux {
 
 impl CreateModule for Mux {
     fn create(start: u16, alloc: Option<u16>, options: Option<HashMap<String,Value>>,remaining: u16) -> Result<Self,Error> {
-        let sub_modules:Vec<Vec<IDs>> = vec![];
-        let addr_size = match options {
-            Some(values) => {
-                match values.get("addrSize") {
-                    Some(value) => {
-                        match value {
-                            Value::Number(num) => {
-                                num.as_u64().unwrap_or(1).try_into().unwrap_or(1)
-                            },
-                            _ => {1}
-                        }
+        let mut sub_modules:Vec<Vec<IDs>> = vec![];
+        let addr_size = if options.is_some() {
+            let stupid_unwrap_variable = options.unwrap();
+            let size = stupid_unwrap_variable.get("addrSize");
+            if size.is_some() {
+                match size.unwrap() {
+                    Value::Number(num) => {
+                        num.as_u64().map_or(1, |n| n.try_into().unwrap_or(1))
                     },
-                    None => {1}
+                    _ => {1}
                 }
-            },
-            None => {1}
+            } else {
+                1
+            }
+        } else {
+            1
         };
+        
+
+        let alloc = alloc.unwrap_or(32);
+        if alloc > remaining {
+            return Err(
+                Error::OutOfSpace
+            )
+        }
+
+        if addr_size > alloc {
+            return Err(
+                Error::Generic("addr size greater then allocated size".into())
+            )
+        }
+
+        
 
         Ok(Mux {
             start,
-            alloc.unwrap_or(32),
+            alloc,
             addr_size,
             sub_modules
         })
