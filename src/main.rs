@@ -4,7 +4,7 @@ use serde_json::Value;
 
 enum Error {
     /// for when the adress is not managed by this module
-    OutOfAuthority,
+    OutOfScope,
     /// something tried to allocate more memory then is avaliable
     OutOfSpace
 }
@@ -39,6 +39,35 @@ struct Mux {
     alloc: u16,
     addr_size: u16,
     sub_modules: Vec<Vec<IDs>>
+}
+
+impl CreateModule for Mux {
+    fn create(start: u16, alloc: Option<u16>, options: Option<HashMap<String,Value>>,remaining: u16) -> Result<Self,Error> {
+        let sub_modules:Vec<Vec<IDs>> = vec![];
+        let addr_size = match options {
+            Some(values) => {
+                match values.get("addrSize") {
+                    Some(value) => {
+                        match value {
+                            Value::Number(num) => {
+                                num.as_u64().unwrap_or(1).try_into().unwrap_or(1)
+                            },
+                            _ => {1}
+                        }
+                    },
+                    None => {1}
+                }
+            },
+            None => {1}
+        };
+
+        Ok(Mux {
+            start,
+            alloc.unwrap_or(32),
+            addr_size,
+            sub_modules
+        })
+    }
 }
 
 impl Module for Mux {
